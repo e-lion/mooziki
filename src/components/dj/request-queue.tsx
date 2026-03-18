@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Clock, XCircle, PlayCircle, Loader2 } from 'lucide-react';
+import { updateRequestStatusAction } from '@/app/actions';
 
 // Reflects our Supabase Schema
 interface RequestRecord {
@@ -70,19 +71,15 @@ export default function RequestQueue({ djId }: { djId: string }) {
       prev.map(req => req.id === id ? { ...req, status: newStatus } : req)
     );
 
-    const { error } = await supabase
-      .from('requests')
-      // @ts-ignore - bypassing complex supabase generic typing error for prototype
-      .update({ status: newStatus })
-      .eq('id', id);
-
-    if (error) {
+    try {
+      const { success } = await updateRequestStatusAction(id, newStatus);
+      if (!success) {
+        throw new Error("Failed to update status");
+      }
+    } catch (error) {
       console.error("Failed to update status", error);
       // Revert upon failure
       fetchRequests();
-    } else if (newStatus === 'played') {
-      // Simulate payout logic (Commission Split)
-      simulatePayout(id);
     }
   };
 

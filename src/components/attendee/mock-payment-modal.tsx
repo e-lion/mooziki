@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { createRequestAction } from '@/app/actions';
 
 interface Song {
   trackId: number;
@@ -34,30 +35,17 @@ export function MockPaymentModal({ song, onClose, onSuccess, djId }: MockPayment
     // 1. Simulate network payment delay (1.5s)
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // 2. Insert into Supabase 'requests' table
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error("Must be logged in to request a song");
+      // Use the Secure Server Action instead of direct insert
+      const { success } = await createRequestAction({
+        dj_id: djId || null,
+        song_title: song.trackName,
+        song_artist: song.artistName,
+        song_art_url: song.artworkUrl100
+      });
 
-      // Note: If RLs are turned on, insure Insert policies exist
-      const { error } = await supabase
-        .from('requests')
-        .insert({
-          attendee_id: user.id,
-          dj_id: djId || null, 
-          song_title: song.trackName,
-          song_artist: song.artistName,
-          song_art_url: song.artworkUrl100,
-          fee_amount: baseFee,
-          status: 'pending'
-        } as any);
-
-      if (error) {
-        console.error("Failed to insert request:", error);
-        alert("Failed to queue song. Please try again.");
-        setIsProcessing(false);
-        return;
+      if (!success) {
+        throw new Error("Failed to queue song");
       }
 
       setIsSuccess(true);
