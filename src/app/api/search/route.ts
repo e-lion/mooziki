@@ -10,7 +10,12 @@ export async function GET(request: Request) {
   }
 
   try {
-    const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=${limit}`);
+    const response = await fetch(
+      `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=${limit}`,
+      {
+        next: { revalidate: 3600 } // Cache results for 1 hour
+      }
+    );
     
     if (!response.ok) {
       throw new Error('iTunes API responded with an error');

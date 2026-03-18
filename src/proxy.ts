@@ -1,11 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
-import { createClient } from '@/lib/supabase/server'
 
 export async function proxy(request: NextRequest) {
-  const response = await updateSession(request)
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabaseResponse, user } = await updateSession(request)
 
   const url = new URL(request.url)
   const path = url.pathname
@@ -35,7 +32,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return response
+  return supabaseResponse
 }
 
 export const config = {

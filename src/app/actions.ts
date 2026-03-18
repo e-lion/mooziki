@@ -1,5 +1,7 @@
+"use server";
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { Database } from '@/lib/database.types';
 
 /**
  * Creates a new song request.
@@ -18,8 +20,8 @@ export async function createRequestAction(formData: {
 
   const baseFee = process.env.NEXT_PUBLIC_BASE_FEE ? parseInt(process.env.NEXT_PUBLIC_BASE_FEE) : 99;
 
-  const { error } = await supabase
-    .from('requests')
+  const { error } = await (supabase
+    .from('requests') as any)
     .insert({
       attendee_id: user.id,
       dj_id: formData.dj_id,
@@ -28,7 +30,7 @@ export async function createRequestAction(formData: {
       song_art_url: formData.song_art_url,
       fee_amount: baseFee,
       status: 'pending'
-    } as any);
+    });
 
   if (error) throw new Error(error.message);
 
@@ -63,12 +65,12 @@ export async function updateRequestStatusAction(
   }
 
   const { error } = await (supabase
-    .from('requests')
+    .from('requests') as any)
     .update({ 
       status: newStatus,
-      dj_id: user.id // Assign DJ if it was null
-    } as any)
-    .eq('id', requestId) as any);
+      dj_id: user.id
+    })
+    .eq('id', requestId);
 
   if (error) throw new Error(error.message);
 
